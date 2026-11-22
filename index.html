@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cost Approach Calculator</title>
+    <meta name="description" content="Cost approach to value: replacement cost, depreciation and a step-by-step breakdown. Education tool, not an appraisal." />
+  </head>
+  <body>
+    <div class="backdrop" aria-hidden="true"></div>
+    <header class="top">
+      <div>
+        <h1>Cost Approach Calculator</h1>
+        <p class="sub">Replacement cost new, depreciation, and a step-by-step breakdown.</p>
+      </div>
+      <nav class="pill">
+        <button id="print" type="button">Print summary</button>
+        <button id="reset" type="button">Reset</button>
+      </nav>
+    </header>
+    <p class="notice" role="note">
+      <strong>Analysis and education tool, not an appraisal.</strong> A USPAP-compliant appraisal requires a licensed
+      or certified appraiser. The unit costs shown are placeholder figures, not a licensed cost service. All defaults
+      are made-up sample data.
+    </p>
+
+    <main class="layout">
+      <form id="inputs" class="col" autocomplete="off" onsubmit="return false">
+        <section class="card">
+          <h2>1. Land</h2>
+          <label>Land value method
+            <select data-k="landMode">
+              <option value="entered">Enter a value</option>
+              <option value="comps">From land comps (median $/sq ft)</option>
+            </select>
+          </label>
+          <div id="landEntered">
+            <label>Land value ($) <input type="number" data-k="landValue" min="0" step="1000" /></label>
+          </div>
+          <div id="landComps" hidden>
+            <label>Subject land area (sq ft) <input type="number" data-k="landArea" min="0" step="100" /></label>
+            <div id="compRows"></div>
+            <button type="button" id="addComp" class="small">Add comp</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>2. Building and replacement cost</h2>
+          <div class="grid2">
+            <label>Building type <select data-k="buildingType" id="selType"></select></label>
+            <label>Quality grade <select data-k="quality" id="selQuality"></select></label>
+            <label>Gross living area (sq ft) <input type="number" data-k="gla" min="0" step="10" /></label>
+            <label>Condition grade <select data-k="condition" id="selCondition"></select></label>
+            <label>Garage (sq ft) <input type="number" data-k="garage" min="0" step="10" /></label>
+            <label>Porch (sq ft) <input type="number" data-k="porch" min="0" step="10" /></label>
+            <label>Basement (sq ft) <input type="number" data-k="basement" min="0" step="10" /></label>
+            <label class="check"><input type="checkbox" data-k="basementFinished" /> Basement finished</label>
+            <label class="check"><input type="checkbox" data-k="hvac" /> Central HVAC</label>
+            <span></span>
+            <label>Regional cost multiplier <input type="number" data-k="regional" min="0" step="0.01" /></label>
+            <label>Current-cost index <input type="number" data-k="index" min="0" step="0.01" /></label>
+          </div>
+          <details class="table-edit">
+            <summary>Edit unit-cost table (placeholder figures)</summary>
+            <p class="hint" id="tableLabel"></p>
+            <div id="tableRows"></div>
+          </details>
+        </section>
+
+        <section class="card">
+          <h2>3. Physical depreciation (age-life)</h2>
+          <div class="grid2">
+            <label>Actual age (years) <input type="number" data-k="actualAge" min="0" step="1" /></label>
+            <label>Total economic life (years) <input type="number" data-k="tel" min="1" step="1" /></label>
+            <label>Effective age (years) <input type="number" data-k="effAge" min="0" step="1" /></label>
+            <label>&nbsp;<button type="button" id="suggestAge" class="small">Suggest from condition</button></label>
+            <label>Curable deferred maintenance ($) <input type="number" data-k="curablePhys" min="0" step="100" /></label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>4. Functional obsolescence</h2>
+          <div id="funcRows"></div>
+          <button type="button" id="addFuncCurable" class="small">Add curable item</button>
+          <button type="button" id="addFuncIncurable" class="small">Add incurable item</button>
+        </section>
+
+        <section class="card">
+          <h2>5. External obsolescence</h2>
+          <label>Method
+            <select data-k="extMode">
+              <option value="percent">Entered percent</option>
+              <option value="paired-rent">Paired-rent capitalization</option>
+            </select>
+          </label>
+          <div id="extPercent"><label>Percent of value remaining (%) <input type="number" data-k="extPct" min="0" max="100" step="0.5" /></label></div>
+          <div id="extRent" class="grid2" hidden>
+            <label>Monthly rent without influence ($) <input type="number" data-k="rentWithout" min="0" step="10" /></label>
+            <label>Monthly rent with influence ($) <input type="number" data-k="rentWith" min="0" step="10" /></label>
+            <label>Cap rate (%) <input type="number" data-k="extCap" min="0.1" step="0.1" /></label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>6. Entrepreneurial incentive</h2>
+          <label>Percent of (cost new + land) (%) <input type="number" data-k="incentive" min="0" step="0.5" /></label>
+        </section>
+      </form>
+
+      <section class="col" id="results" aria-live="polite"></section>
+    </main>
+    <footer class="foot">
+      Chase Builds. MIT licensed. Education tool, not an appraisal; a USPAP-compliant appraisal requires a licensed or
+      certified appraiser.
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
