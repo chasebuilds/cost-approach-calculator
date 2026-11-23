@@ -236,3 +236,35 @@ export function depreciationSeries(rcn: number, tel: number, curableCost = 0): D
   }
   return out;
 }
+
+/* ---------- Market extraction of depreciation ---------- */
+
+export interface Extraction {
+  improvementValue: number;
+  depreciation: number;
+  /** Total depreciation as a fraction of RCN. May be negative if the sale exceeds cost new. */
+  pct: number;
+  /** pct per year of effective age (straight-line), or 0 when effective age is 0. */
+  annualRate: number;
+}
+
+/**
+ * Extract total depreciation from one improved sale:
+ * (sale price - land value) = value of improvements; depreciation = RCN - that value.
+ */
+export function extractDepreciation(
+  salePrice: number,
+  landValue: number,
+  rcn: number,
+  effectiveAge: number,
+): Extraction {
+  const improvementValue = salePrice - landValue;
+  const depreciation = rcn - improvementValue;
+  const pct = rcn > 0 ? depreciation / rcn : 0;
+  return { improvementValue, depreciation, pct, annualRate: effectiveAge > 0 ? pct / effectiveAge : 0 };
+}
+
+/** Remaining economic life = total economic life - effective age, never below zero. */
+export function remainingEconomicLife(effectiveAge: number, totalEconomicLife: number): number {
+  return Math.max(0, totalEconomicLife - effectiveAge);
+}

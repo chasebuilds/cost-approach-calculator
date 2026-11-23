@@ -2,80 +2,17 @@ import "./style.css";
 import {
   depreciationSeries,
   estimate,
+  extractDepreciation,
+  remainingEconomicLife,
   functionalItemAmount,
   landFromComps,
   suggestEffectiveAge,
   type EstimateInput,
-  type FunctionalItem,
-  type LandComp,
 } from "./calc";
 import { depreciationChart } from "./chart";
 import { SAMPLE_TABLE, type CostTable } from "./costTable";
-
-interface State {
-  landMode: "entered" | "comps";
-  landValue: number;
-  landArea: number;
-  comps: LandComp[];
-  buildingType: string;
-  quality: string;
-  condition: string;
-  gla: number;
-  garage: number;
-  porch: number;
-  basement: number;
-  basementFinished: boolean;
-  hvac: boolean;
-  regional: number;
-  index: number;
-  actualAge: number;
-  tel: number;
-  effAge: number;
-  curablePhys: number;
-  func: FunctionalItem[];
-  extMode: "percent" | "paired-rent";
-  extPct: number;
-  rentWithout: number;
-  rentWith: number;
-  extCap: number;
-  incentive: number;
-}
-
-const defaults = (): State => ({
-  landMode: "entered",
-  landValue: 40000,
-  landArea: 18000,
-  comps: [
-    { price: 20000, areaSqFt: 10000 },
-    { price: 33000, areaSqFt: 15000 },
-    { price: 37500, areaSqFt: 15000 },
-  ],
-  buildingType: "Ranch (1 story)",
-  quality: "Average",
-  condition: "Good",
-  gla: 1500,
-  garage: 400,
-  porch: 100,
-  basement: 1000,
-  basementFinished: false,
-  hvac: true,
-  regional: 1.05,
-  index: 1.1,
-  actualAge: 20,
-  tel: 60,
-  effAge: 15,
-  curablePhys: 5000,
-  func: [
-    { kind: "curable", name: "Outdated wiring (sample)", costToCure: 3000 },
-    { kind: "incurable", name: "Poor floor plan (sample)", annualLoss: 600, capRate: 0.1 },
-  ],
-  extMode: "percent",
-  extPct: 5,
-  rentWithout: 1200,
-  rentWith: 1150,
-  extCap: 8,
-  incentive: 10,
-});
+import { breakdownCsv, decodeShare, encodeShare, parseScenario, scenarioJson } from "./io";
+import { defaults, type State } from "./state";
 
 let s = defaults();
 let table: CostTable = structuredClone(SAMPLE_TABLE);
@@ -286,6 +223,17 @@ function render(): void {
     s.extMode === "percent"
       ? `${s.extPct}% of value remaining after steps 3 and 4`
       : `(${usd(s.rentWithout)} - ${usd(s.rentWith)}) x 12 / ${s.extCap}% cap rate, capped at value remaining`;
+  const ex = extractDepreciation(s.salePrice, s.saleLand, s.saleRcn, s.saleEffAge);
+  const modelPct = r.rcn > 0 ? e.totalDepreciation / r.rcn : 0;
+  const marketCard = s.saleOn
+    ? `<section class="card result"><h2>Market check</h2>
+      <p class="hint">Sale price ${usd(s.salePrice)} - land ${usd(s.saleLand)} = ${usd(ex.improvementValue)} for improvements. Cost new ${usd(s.saleRcn)}.</p>
+      <table class="steps">
+        ${row("Depreciation implied by the sale", usd(ex.depreciation), `${(ex.pct * 100).toFixed(1)}% of cost new${ex.annualRate ? `, ${(ex.annualRate * 100).toFixed(2)}% per year of effective age` : ""}`, "total")}
+        ${row("Depreciation in this estimate", usd(e.totalDepreciation), `${(modelPct * 100).toFixed(1)}% of cost new`, "total")}
+        ${row("Gap (estimate minus market)", `${((modelPct - ex.pct) * 100).toFixed(1)} pts`, "percentage points of cost new", "sub")}
+      </table></section>`
+    : "";
   const series = depreciationSeries(r.rcn, s.tel, e.physical.curable);
 
   $("results").innerHTML = `
@@ -307,7 +255,7 @@ function render(): void {
         ${row("Replacement cost new", usd(r.rcn), "", "total")}
         ${row("3. Physical depreciation", "", "", "step")}
         ${row("Curable (deferred maintenance)", `(${usd(e.physical.curable)})`, "cost to cure", "sub")}
-        ${row("Incurable (age-life)", `(${usd(e.physical.incurable)})`, `(RCN - curable) x ${s.effAge} / ${s.tel} = ${(e.physical.rate * 100).toFixed(1)}%`, "sub")}
+        ${row("Incurable (age-life)", `(${usd(e.physical.incurable)})`, `(RCN - curable) x ${s.effAge} / ${s.tel} = ${(e.physical.rate * 100).toFixed(1)}%; remaining economic life ${remainingEconomicLife(s.effAge, s.tel)} yr`, "sub")}
         ${row("Total physical", `(${usd(e.physical.total)})`, "", "total")}
         ${row("4. Functional obsolescence", `(${usd(e.functional.total)})`, "", "step")}
         ${funcRows.join("")}
@@ -322,12 +270,21 @@ function render(): void {
       <h2>Depreciation over age</h2>
       ${depreciationChart(series, s.effAge)}
       <p class="hint">Physical depreciation only (age-life method); curable amount held constant.</p>
-    </section>`;
+    </section>${marketCard}`;
 }
 
 /* ---------- wiring ---------- */
 
 function init(): void {
+  if (location.hash.startsWith("#s=")) {
+    try {
+      const sc = decodeShare(location.hash);
+      s = { ...defaults(), ...sc.state };
+      table = sc.table;
+    } catch {
+      /* bad link: fall back to the sample data */
+    }
+  }
   syncForm();
   const form = $("inputs");
   form.addEventListener("input", (e) => {
@@ -358,6 +315,43 @@ function init(): void {
     const ea = form.querySelector<HTMLInputElement>('[data-k="effAge"]');
     if (ea) ea.value = String(s.effAge);
     render();
+  });
+  const download = (name: string, text: string, type: string): void => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type }));
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  const scenarioNow = () => ({ version: 1 as const, state: s, table });
+  const load = (sc: { state: State; table: CostTable }): void => {
+    s = { ...defaults(), ...sc.state };
+    table = sc.table;
+    syncForm();
+    render();
+  };
+  $("saveJson").addEventListener("click", () => download("cost-approach-scenario.json", scenarioJson(scenarioNow()), "application/json"));
+  $("exportCsv").addEventListener("click", () => download("cost-approach-breakdown.csv", breakdownCsv(estimate(buildInput(), table)), "text/csv"));
+  $("loadJson").addEventListener("click", () => $<HTMLInputElement>("fileIn").click());
+  $<HTMLInputElement>("fileIn").addEventListener("change", (ev) => {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    void file.text().then((text) => {
+      try {
+        load(parseScenario(text));
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Could not load that file.");
+      }
+      input.value = "";
+    });
+  });
+  $("shareLink").addEventListener("click", () => {
+    const url = `${location.origin}${location.pathname}#s=${encodeShare(scenarioNow())}`;
+    history.replaceState(null, "", url);
+    void navigator.clipboard?.writeText(url).catch(() => undefined);
+    $("shareLink").textContent = "Link copied";
+    setTimeout(() => ($("shareLink").textContent = "Copy share link"), 1800);
   });
   $("print").addEventListener("click", () => window.print());
   $("reset").addEventListener("click", () => {

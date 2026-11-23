@@ -4,7 +4,7 @@
 
 **Live demo: https://chasebuilds.github.io/cost-approach-calculator/**
 
-A static web app for the cost approach to value. Enter land, a building and its depreciation, and it shows every step from replacement cost new to an indicated value, plus a depreciation chart and a one-page print summary.
+**Enter a building, get a documented cost-approach value.** Every step is shown, from replacement cost new through each kind of depreciation to the indicated value, with a depreciation chart and a one-page print summary. Save a scenario as JSON, export the breakdown as CSV, or share it as a link. It runs in the browser; nothing is uploaded.
 
 > **This is an analysis and education tool, not an appraisal.** A USPAP-compliant appraisal requires a licensed or certified appraiser. The unit costs that ship with the app are **made-up placeholder figures**, not a licensed cost service. All default data is synthetic.
 
@@ -18,7 +18,9 @@ A static web app for the cost approach to value. Enter land, a building and its 
 4. **Functional obsolescence**: entered items. Curable items use cost to cure. Incurable items capitalize a yearly rent loss at a cap rate.
 5. **External obsolescence**: an entered percent of the value remaining, or paired-rent capitalization (monthly rent difference x 12 / cap rate).
 6. **Entrepreneurial incentive**: a percent of (replacement cost new + land).
-7. A step-by-step breakdown, a chart of depreciation over age, and a print layout that fits one page.
+7. **Market check**: extract the depreciation one improved sale implies (sale price less land, against its cost new) and compare it with this estimate in percentage points.
+8. A step-by-step breakdown, a chart of depreciation over age with remaining economic life, and a print layout that fits one page.
+9. **Save and share**: scenario JSON (save and load, with the edited cost table), CSV of the breakdown, and a share link that carries the whole scenario in the URL hash.
 
 ## Formulas
 
@@ -32,6 +34,7 @@ A static web app for the cost approach to value. Enter land, a building and its 
 | External, percent | `pct x (RCN - physical - functional)` |
 | External, paired rent | `min(remaining, (rent without - rent with) x 12 / cap rate)` |
 | Entrepreneurial incentive | `pct x (RCN + land)`, added after depreciation, not depreciated |
+| Extracted depreciation | `(RCN - (sale price - land)) / RCN` |
 | Indicated value | `land + (RCN - total depreciation) + incentive` |
 
 Worked example used in the tests (all hand-checked): ranch, 1,500 sq ft, average quality, features $56,000, x1.05 x1.10 gives RCN $237,930. Effective age 15 of 60 with $5,000 deferred maintenance gives physical $63,232.50. Functional $9,000, external 5% gives $8,284.88. Land $40,000 and 10% incentive give an indicated value of $225,205.63.
@@ -41,7 +44,8 @@ Worked example used in the tests (all hand-checked): ranch, 1,500 sq ft, average
 ```bash
 npm ci
 npm run dev      # local server
-npm test         # Vitest, 27 tests
+npm test         # Vitest, 39 tests
+npm run bench    # sweep and timing, see BENCHMARK.md
 npm run lint     # ESLint
 npm run build    # strict tsc + Vite build into dist/
 ```
@@ -55,8 +59,13 @@ TypeScript strict mode, ESLint (typescript-eslint strict) and the tests run in C
 - Age-life is the only physical method. No breakdown or observed-condition method.
 - Land comps use a plain median with no adjustments for date, location or size.
 - The entrepreneurial incentive treatment (a percent of cost new plus land) is one common convention, not the only one. Market-extracted incentive is not calculated.
-- Nothing is saved; reload clears your entries.
+- Nothing is stored in the browser. Use Save JSON or the share link to keep a scenario.
+- Market extraction uses one sale; real work compares several and adjusts for time and location.
 - No USPAP reconciliation with the sales comparison or income approaches.
+
+## Benchmark
+
+See [BENCHMARK.md](BENCHMARK.md): 25,920 swept cases, 0 invariant violations, about 2.96 million estimates per second on the dev machine.
 
 ## License
 

@@ -15,7 +15,12 @@
       </div>
       <nav class="pill">
         <button id="print" type="button">Print summary</button>
+        <button id="saveJson" type="button">Save JSON</button>
+        <button id="loadJson" type="button">Load JSON</button>
+        <button id="exportCsv" type="button">Export CSV</button>
+        <button id="shareLink" type="button">Copy share link</button>
         <button id="reset" type="button">Reset</button>
+        <input id="fileIn" type="file" accept="application/json,.json" hidden />
       </nav>
     </header>
     <p class="notice" role="note">
@@ -104,6 +109,18 @@
         <section class="card">
           <h2>6. Entrepreneurial incentive</h2>
           <label>Percent of (cost new + land) (%) <input type="number" data-k="incentive" min="0" step="0.5" /></label>
+        </section>
+
+        <section class="card">
+          <h2>7. Market check: extract depreciation from a sale</h2>
+          <p class="hint">Optional. One improved sale (synthetic or your own) gives the depreciation the market implies, to compare with this estimate.</p>
+          <label class="check"><input type="checkbox" data-k="saleOn" /> Show the market check</label>
+          <div class="grid2">
+            <label>Sale price ($) <input type="number" data-k="salePrice" min="0" step="1000" /></label>
+            <label>Land value in that sale ($) <input type="number" data-k="saleLand" min="0" step="1000" /></label>
+            <label>Replacement cost new of that sale ($) <input type="number" data-k="saleRcn" min="0" step="1000" /></label>
+            <label>Effective age of that sale (years) <input type="number" data-k="saleEffAge" min="0" step="1" /></label>
+          </div>
         </section>
       </form>
 
