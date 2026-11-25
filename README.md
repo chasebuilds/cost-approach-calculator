@@ -70,3 +70,11 @@ See [BENCHMARK.md](BENCHMARK.md): 25,920 swept cases, 0 invariant violations, ab
 ## License
 
 MIT, Chase Builds.
+
+## More from Chase Builds
+
+- **[income-approach-valuation](https://github.com/chasebuilds/income-approach-valuation)**: Income approach for rentals and small commercial: rent roll to NOI, direct cap, band of investment and DCF, reconciled. ([live demo](https://chasebuilds.github.io/income-approach-valuation/))
+- **[assessment-ratio-study](https://github.com/chasebuilds/assessment-ratio-study)**: Regressivity, under-assessment and sales chasing caught in 30 of 30 seeded counties. ([live demo](https://chasebuilds.github.io/assessment-ratio-study/))
+- **[land-feasibility-3d](https://github.com/chasebuilds/land-feasibility-3d)**: Real USGS terrain in 3D with slope, lot layout, cut and fill, and flood checks, plus a quick pro forma. ([live demo](https://chasebuilds.github.io/land-feasibility-3d/))
+
+[All projects, sorted by industry](https://github.com/chasebuilds) · [chasebuilds.github.io](https://chasebuilds.github.io)
