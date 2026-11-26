@@ -315,6 +315,11 @@ function init(): void {
     const ea = form.querySelector<HTMLInputElement>('[data-k="effAge"]');
     if (ea) ea.value = String(s.effAge);
     render();
+    // Say what happened, even when the suggestion matches what was already there.
+    const btn = $("suggestAge");
+    btn.textContent = `Set to ${s.effAge} years`;
+    ea?.animate([{ boxShadow: "0 0 0 3px #f2c27a" }, { boxShadow: "0 0 0 0 transparent" }], { duration: 900 });
+    setTimeout(() => { btn.textContent = "Suggest from condition"; }, 1600);
   });
   const download = (name: string, text: string, type: string): void => {
     const a = document.createElement("a");
